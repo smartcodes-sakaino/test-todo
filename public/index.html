@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>日報帳</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 512 512" aria-hidden="true">
+        <rect width="512" height="512" rx="112" fill="#3B7BFF"/>
+        <path d="M0,340 L512,340 L512,400 A112,112 0 0 1 400,512 L112,512 A112,112 0 0 1 0,400 Z" fill="#1F52D6"/>
+        <rect x="156" y="124" width="220" height="272" rx="26" fill="#12294F" transform="rotate(-6 256 246)"/>
+        <g transform="rotate(-6 256 246)">
+          <rect x="146" y="110" width="220" height="272" rx="26" fill="#FFFFFF" stroke="#12294F" stroke-width="14"/>
+          <path d="M186 246 L228 288 L300 206" fill="none" stroke="#12294F" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M186 246 L228 288 L300 206" fill="none" stroke="#FF7A45" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+      </svg>
+      <h1>日報帳</h1>
+      <span class="progress-pill" id="progressPill">0/0 完了</span>
+    </div>
+    <div class="date-label" id="todayLabel"></div>
+  </header>
+
+  <div class="layout">
+    <div>
+      <section class="card">
+        <div class="card-head">
+          <h2 id="openHeading">未完了のタスク</h2>
+          <button type="button" class="btn btn-primary" id="newTaskBtn">+ 新規タスクを追加</button>
+        </div>
+        <ul class="tasks" id="openTasksList"></ul>
+        <p class="empty" id="openEmpty" hidden>未完了のタスクはありません。</p>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>今日完了したタスク<span class="count" id="doneTodayCount"></span></h2>
+        </div>
+        <ul class="tasks" id="doneTodayList"></ul>
+        <p class="empty" id="doneTodayEmpty" hidden>今日完了したタスクはまだありません。</p>
+
+        <button type="button" class="past-toggle" id="pastToggleBtn" hidden></button>
+        <ul class="tasks" id="pastDoneList" hidden></ul>
+      </section>
+    </div>
+
+    <div>
+      <section class="card">
+        <div class="card-head">
+          <h2>今日のまとめ</h2>
+          <button type="button" class="icon-btn" id="templateSettingsBtn" title="テンプレート設定" aria-label="テンプレート設定">⚙</button>
+        </div>
+        <div class="summary-count" id="summaryCount">0</div>
+        <div class="summary-label">件のタスクを完了</div>
+        <div class="summary-names" id="summaryNames"></div>
+        <button type="button" class="btn btn-accent btn-block" id="reportBtn">日報を作成</button>
+        <p class="report-hint" id="reportHint" hidden>本日完了したタスクがまだありません。</p>
+      </section>
+    </div>
+  </div>
+
+  <!-- 新規/編集タスク モーダル -->
+  <div class="overlay" id="taskModalOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+      <h3 id="taskModalTitle">新しいタスク</h3>
+      <form id="taskForm">
+        <div class="form-row">
+          <div class="field" style="flex:2 1 220px;">
+            <label for="taskNameInput">タスク名</label>
+            <input type="text" id="taskNameInput" placeholder="例: 見積書を送付する" required maxlength="60" />
+          </div>
+          <div class="field">
+            <label for="taskDueInput">期限(任意)</label>
+            <input type="date" id="taskDueInput" />
+          </div>
+        </div>
+        <div class="field" style="margin-block-start:12px;">
+          <label for="taskMemoInput">メモ(任意)</label>
+          <textarea id="taskMemoInput" rows="3" placeholder="例: 先方に確認済みの単価で"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="taskSubmitBtn">追加</button>
+          <button type="button" class="btn btn-ghost" id="taskCancelBtn">キャンセル</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 削除確認 モーダル -->
+  <div class="overlay" id="deleteConfirmOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle" style="max-width:400px;">
+      <h3 id="deleteConfirmTitle">タスクを削除しますか?</h3>
+      <p class="modal-sub" id="deleteConfirmMessage"></p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-danger" id="deleteConfirmBtn">削除する</button>
+        <button type="button" class="btn btn-ghost" id="deleteCancelBtn">削除しない(キャンセル)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- テンプレート設定 モーダル -->
+  <div class="overlay" id="templateModalOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="templateModalTitle">
+      <h3 id="templateModalTitle">日報テンプレート設定</h3>
+      <p class="modal-sub">日報の宛先・件名・文面のひな形を編集できます。</p>
+      <form id="templateForm">
+        <div class="form-row">
+          <div class="field">
+            <label for="tplToInput">宛先</label>
+            <input type="text" id="tplToInput" required />
+          </div>
+          <div class="field">
+            <label for="tplSubjectInput">件名</label>
+            <input type="text" id="tplSubjectInput" required />
+          </div>
+        </div>
+        <div class="field" style="margin-block-start:12px;">
+          <label for="tplGreetingInput">挨拶文</label>
+          <textarea id="tplGreetingInput" rows="2"></textarea>
+        </div>
+        <div class="field" style="margin-block-start:12px;">
+          <label for="tplIntroInput">導入文(完了タスク一覧の前)</label>
+          <textarea id="tplIntroInput" rows="2"></textarea>
+        </div>
+        <div class="field" style="margin-block-start:12px;">
+          <label for="tplClosingInput">締めの文</label>
+          <textarea id="tplClosingInput" rows="2"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="button" class="btn btn-ghost" id="templateCancelBtn">キャンセル</button>
+          <button type="button" class="btn btn-ghost" id="templateResetBtn" style="margin-inline-start:auto;">初期設定に戻す</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 日報コピー モーダル -->
+  <div class="overlay" id="reportModalOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+      <h3 id="reportModalTitle">日報プレビュー</h3>
+      <p class="modal-sub">内容を確認し、コピーしてGmailに貼り付けてください。</p>
+      <div class="mail-preview">
+        <div class="field">
+          <label for="reportToInput">宛先</label>
+          <input type="text" id="reportToInput" readonly />
+        </div>
+        <div class="field">
+          <label for="reportSubjectInput">件名</label>
+          <input type="text" id="reportSubjectInput" readonly />
+        </div>
+        <div class="field">
+          <label for="reportBodyInput">本文</label>
+          <textarea id="reportBodyInput" rows="8" readonly></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-accent" id="reportCopyBtn">コピーする</button>
+        <a class="btn btn-yellow" id="reportGmailLink" target="_blank" rel="noopener">Gmailで新規作成を開く</a>
+        <button type="button" class="btn btn-ghost" id="reportCloseBtn" style="margin-inline-start:auto;">閉じる</button>
+      </div>
+      <div class="status-line" id="reportStatus" hidden></div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
