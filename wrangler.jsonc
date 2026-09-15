@@ -7,7 +7,7 @@
     {
       "binding": "DB",
       "database_name": "nippouchou-db",
-      "database_id": "REPLACE_WITH_REAL_DATABASE_ID",
+      "database_id": "ecd5d7b4-0a3a-45a5-9e03-ba5bf63d0142",
       "migrations_dir": "migrations"
     }
   ]
